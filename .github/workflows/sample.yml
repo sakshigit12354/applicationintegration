@@ -71,7 +71,7 @@ jobs:
           cp -r $HOME/.integrationcli/bin/* ./bin
       
           # Add to PATH
-          echo "$GITHUB_PATH" >> ./bin
+          echo "$PWD/bin" >> $GITHUB_PATH
           export PATH=$PATH:./bin
       
           # Check version
