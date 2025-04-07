@@ -38,7 +38,7 @@ jobs:
       id-token: 'write'
 
     name: Apply integration version
-    runs-on: alpine:3.19
+    runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
@@ -58,8 +58,22 @@ jobs:
         run: |
           echo "SHORT_SHA=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_OUTPUT
 
+      - name: Install dependencies and integrationcli
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext-base curl
+          curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/application-integration-management-toolkit/main/downloadLatest.sh | sh -
+          cp -r /root/.integrationcli/bin ./bin
+          ./bin/integrationcli --version
+
       - name: Create and Publish Integration
-        id: 'publish-integration'
-        uses: docker://us-docker.pkg.dev/appintegration-toolkit/images/integrationcli:0.81.5 #pin to version of choice
-        with:
-          args: integrations apply --env=${{ env.ENVIRONMENT}} --folder=. --userlabel=${{ steps.calc-vars.outputs.SHORT_SHA }} --run-tests=true --wait=true --proj=${{ env.PROJECT_ID }} --reg=${{ env.REGION }} --token ${{ steps.gcp-auth.outputs.access_token }}
+        run: |
+          ./bin/integrationcli integrations apply \
+            --env=${{ env.ENVIRONMENT }} \
+            --folder=. \
+            --userlabel=${{ steps.calc-vars.outputs.SHORT_SHA }} \
+            --run-tests=true \
+            --wait=true \
+            --proj=${{ env.PROJECT_ID }} \
+            --reg=${{ env.REGION }} \
+            --token ${{ steps.gcp-auth.outputs.access_token }}
