@@ -10,10 +10,10 @@
 	],
 	"integration_overrides": {
 		"databasePersistencePolicy": "DATABASE_PERSISTENCE_ASYNC",
-		"enableVariableMasking": true,
+		"enableVariableMasking": false,
 		"cloudLoggingDetails": {
-			"cloudLoggingSeverity": "INFO",
-			"enableCloudLogging": true
+			"cloudLoggingSeverity": "CLOUD_LOGGING_SEVERITY_UNSPECIFIED",
+			"enableCloudLogging": false
 		}
 	}
 }
