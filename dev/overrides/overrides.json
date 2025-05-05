@@ -1,13 +1,4 @@
 {
-	"connection_overrides": [
-		{
-			"taskId": "2",
-			"task": "GenericConnectorTask",
-			"parameters": {
-				"connectionName": "pubsub"
-			}
-		}
-	],
 	"integration_overrides": {
 		"databasePersistencePolicy": "DATABASE_PERSISTENCE_ASYNC",
 		"enableVariableMasking": false,
