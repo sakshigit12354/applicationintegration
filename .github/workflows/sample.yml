@@ -97,23 +97,23 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
       
 
-      - name: Deploy Changed Integrations
-        if: steps.detect-changes.outputs.CHANGED_FILES != ''
+      - name: Apply each changed integration file
         run: |
           echo "Detected changed integration files:"
           echo "${{ steps.detect-changes.outputs.CHANGED_FILES }}"
-          
-          for file in ${{ steps.detect-changes.outputs.CHANGED_FILES }}; do
-            folder=$(dirname "$file")
-            echo "Deploying integration from: $folder"
-            
+      
+          echo "${{ steps.detect-changes.outputs.CHANGED_FILES }}" | while IFS= read -r file; do
+            echo "Applying integration file: $file"
+      
             ./bin/integrationcli integrations apply \
               --env=${{ env.ENVIRONMENT }} \
-              --folder="$folder" \
-              --userlabel=${{ steps.calc-vars.outputs.SHORT_SHA }} \
+              --folder="$(dirname "$file")" \
+              --file="$(basename "$file")" \
+              --userlabel="${{ github.sha }}" \
               --run-tests=true \
               --wait=true \
               --proj=${{ env.PROJECT_ID }} \
               --reg=${{ env.REGION }} \
-              --token ${{ steps.gcp-auth.outputs.access_token }}
+              --token "${{ steps.gcp-auth.outputs.access_token }}"
           done
+
