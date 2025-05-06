@@ -77,14 +77,28 @@ jobs:
           # Check version
           ./bin/integrationcli --version
       
-      - name: Create and Publish Integration
+      - name: Detect Changed Integration Files
+        id: detect-changes
         run: |
-          ./bin/integrationcli integrations apply \
-            --env=${{ env.ENVIRONMENT }} \
-            --folder=. \
-            --userlabel=${{ steps.calc-vars.outputs.SHORT_SHA }} \
-            --run-tests=true \
-            --wait=true \
-            --proj=${{ env.PROJECT_ID }} \
-            --reg=${{ env.REGION }} \
-            --token ${{ steps.gcp-auth.outputs.access_token }}
+          echo "CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^src/.*\.json$' || true)" >> $GITHUB_OUTPUT
+      
+      - name: Deploy Changed Integrations
+        if: steps.detect-changes.outputs.CHANGED_FILES != ''
+        run: |
+          echo "Detected changed integration files:"
+          echo "${{ steps.detect-changes.outputs.CHANGED_FILES }}"
+          
+          for file in ${{ steps.detect-changes.outputs.CHANGED_FILES }}; do
+            folder=$(dirname "$file")
+            echo "Deploying integration from: $folder"
+            
+            ./bin/integrationcli integrations apply \
+              --env=${{ env.ENVIRONMENT }} \
+              --folder="$folder" \
+              --userlabel=${{ steps.calc-vars.outputs.SHORT_SHA }} \
+              --run-tests=true \
+              --wait=true \
+              --proj=${{ env.PROJECT_ID }} \
+              --reg=${{ env.REGION }} \
+              --token ${{ steps.gcp-auth.outputs.access_token }}
+          done
