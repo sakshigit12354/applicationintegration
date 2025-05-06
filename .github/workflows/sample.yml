@@ -76,16 +76,14 @@ jobs:
       
           # Check version
           ./bin/integrationcli --version
-
+      
       - name: Detect Changed Integration Files
         id: detect-changes
         run: |
           echo "Finding changed integration files..."
       
-          # Set default base commit (fallback)
           BASE_COMMIT="${{ github.event.before }}"
-          
-          # Check if the base commit exists, else fallback to initial commit logic
+      
           if ! git cat-file -e "$BASE_COMMIT^{commit}" 2>/dev/null; then
             echo "Base commit not found, using fallback (initial commit)"
             CHANGED_FILES=$(git ls-files src/*.json)
@@ -94,7 +92,10 @@ jobs:
             CHANGED_FILES=$(git diff --name-only "$BASE_COMMIT" "${{ github.sha }}" | grep '^src/.*\.json$' || true)
           fi
       
-          echo "CHANGED_FILES=$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "CHANGED_FILES<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
 
       - name: Deploy Changed Integrations
         if: steps.detect-changes.outputs.CHANGED_FILES != ''
