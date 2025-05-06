@@ -76,12 +76,20 @@ jobs:
       
           # Check version
           ./bin/integrationcli --version
-      
+
       - name: Detect Changed Integration Files
         id: detect-changes
         run: |
-          echo "CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^src/.*\.json$' || true)" >> $GITHUB_OUTPUT
+          echo "Finding changed integration files..."
       
+          # Try to get list of changed files safely
+          CHANGED_FILES=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" 2>/dev/null || git diff --name-only HEAD^ HEAD)
+      
+          # Filter only integration JSONs in src/
+          CHANGED_INTEGRATIONS=$(echo "$CHANGED_FILES" | grep '^src/.*\.json$' || true)
+      
+          echo "CHANGED_FILES=$CHANGED_INTEGRATIONS" >> $GITHUB_OUTPUT
+
       - name: Deploy Changed Integrations
         if: steps.detect-changes.outputs.CHANGED_FILES != ''
         run: |
