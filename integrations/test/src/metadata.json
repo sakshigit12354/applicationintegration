@@ -1,0 +1,5 @@
+{
+  "displayName": "test",
+  "description": "Multi Integration Deployment",
+  "triggerType": "API/SCHEDULE/EVENT"
+}
