@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# this github action publishes a new integration version
-# it also includes any overrides present in overrides.json and config-vars files.
-# this sample is using the example in samples/scaffold-example
+# This GitHub Action publishes a new integration version.
+# It includes overrides from `overrides.json` and `config-vars`.
+# Sample uses scaffold in `samples/scaffold-example`.
 
 name: apply-sample-action
-permissions: read-all
 
-# Controls when the workflow will run
+permissions:
+  contents: read
+  id-token: write
+
 on: push
 
 env:
@@ -30,31 +32,25 @@ env:
   SERVICE_ACCOUNT: ${{ vars.SERVICE_ACCOUNT }}
 
 jobs:
-
   integrationcli-action:
-
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-
-    name: Apply integration version
+    name: Apply Integration Version
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@1e31de5234b9f8995739874a8ce0492dc87873e2 #v4
+        uses: actions/checkout@v4
 
-      - name: Authenticate Google Cloud
-        id: 'gcp-auth'
-        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f #v2.1.7
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: '${{ env.WORKLOAD_IDENTITY_PROVIDER_NAME }}'
-          service_account: '${{ env.SERVICE_ACCOUNT }}'
-          token_format: 'access_token'
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER_NAME }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+          token_format: access_token
 
-      - name: Calculate variables
-        id: 'calc-vars'
+      - name: Calculate Commit SHA
+        id: calc-vars
         run: |
           echo "SHORT_SHA=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_OUTPUT
 
@@ -62,30 +58,27 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gettext-base curl
-      
+
           # Download and install integrationcli
           curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/application-integration-management-toolkit/main/downloadLatest.sh | sh -
-      
-          # Copy from non-root path (GitHub Actions runs as non-root)
+
           mkdir -p ./bin
-          cp -r $HOME/.integrationcli/bin/* ./bin
-      
+          cp -r "$HOME/.integrationcli/bin/"* ./bin
+
           # Add to PATH
           echo "$PWD/bin" >> $GITHUB_PATH
-          export PATH=$PATH:./bin
-      
-          # Check version
-          ./bin/integrationcli --version
-      
-      
+
+      - name: Check integrationcli version
+        run: integrationcli --version
+
       - name: Create and Publish Integration
         run: |
-          ./bin/integrationcli integrations apply \
-            --env=${{ env.ENVIRONMENT }} \
-            --folder=. \
-            --userlabel=${{ steps.calc-vars.outputs.SHORT_SHA }} \
+          integrationcli integrations apply \
+            --env="${{ env.ENVIRONMENT }}" \
+            --folder="." \
+            --userlabel="${{ steps.calc-vars.outputs.SHORT_SHA }}" \
             --run-tests=true \
             --wait=true \
-            --proj=${{ env.PROJECT_ID }} \
-            --reg=${{ env.REGION }} \
-            --token ${{ steps.gcp-auth.outputs.access_token }}
+            --proj="${{ env.PROJECT_ID }}" \
+            --reg="${{ env.REGION }}" \
+            --token="${{ steps.gcp-auth.outputs.access_token }}"
