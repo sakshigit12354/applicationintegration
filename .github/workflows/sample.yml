@@ -109,7 +109,7 @@ jobs:
             temp_dir=$(mktemp -d)
             env_dir="$temp_dir/${{ env.ENVIRONMENT }}"
             mkdir -p "$env_dir"
-            cp "$file" "$env_dir/"
+            cp "$file" "$env_dir/integration.json"  # ✅ Force name
       
             ./bin/integrationcli integrations apply \
               --env="${{ env.ENVIRONMENT }}" \
