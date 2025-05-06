@@ -75,7 +75,7 @@ jobs:
         run: |
           integrationcli integrations apply \
             --env="${{ env.ENVIRONMENT }}" \
-            --folder="." \
+            --folder="integrations" \
             --userlabel="${{ steps.calc-vars.outputs.SHORT_SHA }}" \
             --run-tests=true \
             --wait=true \
