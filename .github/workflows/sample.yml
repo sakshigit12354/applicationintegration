@@ -77,85 +77,15 @@ jobs:
           # Check version
           ./bin/integrationcli --version
       
-      - name: Detect Changed Integration Files
-        id: detect-changes
+      
+      - name: Create and Publish Integration
         run: |
-          echo "Finding changed integration files..."
-          # For pushes, github.event.before is the commit SHA before the push
-          # For the first push to a new branch, github.event.before can be all zeros.
-          BASE_COMMIT="${{ github.event.before }}"
-          HEAD_COMMIT="${{ github.sha }}"
-
-          # If BASE_COMMIT is all zeros (e.g., new branch), or not a valid commit, list all files.
-          if [[ "$BASE_COMMIT" == "0000000000000000000000000000000000000000" ]] || ! git cat-file -e "$BASE_COMMIT^{commit}" 2>/dev/null; then
-            echo "Base commit '$BASE_COMMIT' not found or invalid. Processing all integration files in src/ as a fallback."
-            CHANGED_FILES=$(git ls-files -- 'src/*.json')
-          else
-            echo "Diffing changed integration files from $BASE_COMMIT to $HEAD_COMMIT in src/ directory."
-            # Ensure grep exits with 0 if no matches are found, to not fail the step
-            CHANGED_FILES=$(git diff --name-only "$BASE_COMMIT" "$HEAD_COMMIT" -- 'src/' | grep '\.json$' || true)
-          fi
-
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "No changed integration JSON files found in src/."
-          else
-            echo "Found changed files:"
-            echo "$CHANGED_FILES"
-          fi
-
-          # Output for subsequent steps
-          echo "CHANGED_FILES<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Apply each changed integration file
-        if: steps.detect-changes.outputs.CHANGED_FILES != '' # Only run if there are changes
-        run: |
-          echo "Applying detected changed integration files:"
-          echo "-------------------------------------------"
-          echo "${{ steps.detect-changes.outputs.CHANGED_FILES }}"
-          echo "-------------------------------------------"
-
-          # Loop through each changed file
-          echo "${{ steps.detect-changes.outputs.CHANGED_FILES }}" | while IFS= read -r file_path; do
-            if [ -z "$file_path" ]; then
-              continue # Skip empty lines
-            fi
-
-            echo "Processing file: $file_path"
-
-            # Create a temporary directory structure for the integration tool
-            temp_deploy_dir=$(mktemp -d)
-            # The integration tool expects <folder>/<ENVIRONMENT>/integration.json
-            target_env_dir="$temp_deploy_dir/${{ env.ENVIRONMENT }}"
-            mkdir -p "$target_env_dir"
-
-            # Copy the changed file to the expected location and name
-            cp "$file_path" "$target_env_dir/integration.json"
-            echo "Copied $file_path to $target_env_dir/integration.json"
-
-            echo "Applying integration using folder: $temp_deploy_dir for environment: ${{ env.ENVIRONMENT }}"
-            # Ensure integrationcli is executable and available at ./bin/integrationcli
-            # Add error handling for the apply command if desired
-            if ! ./bin/integrationcli integrations apply \
-              --env="${{ env.ENVIRONMENT }}" \
-              --folder="$temp_deploy_dir" \
-              --userlabel="${{ steps.calc-vars.outputs.SHORT_SHA }}" \
-              --run-tests=true \
-              --wait=true \
-              --proj="${{ env.PROJECT_ID }}" \
-              --reg="${{ env.REGION }}" \
-              --token="${{ steps.gcp-auth.outputs.access_token }}"; then
-              echo "ERROR: Failed to apply integration for $file_path"
-              # Decide if you want to exit the loop/script on failure
-              # exit 1 # Uncomment to stop on first failure
-            else
-              echo "Successfully applied integration for $file_path"
-            fi
-
-            # Clean up the temporary directory
-            rm -rf "$temp_deploy_dir"
-            echo "Cleaned up $temp_deploy_dir"
-            echo "---"
-          done
-
+          ./bin/integrationcli integrations apply \
+            --env=${{ env.ENVIRONMENT }} \
+            --folder=. \
+            --userlabel=${{ steps.calc-vars.outputs.SHORT_SHA }} \
+            --run-tests=true \
+            --wait=true \
+            --proj=${{ env.PROJECT_ID }} \
+            --reg=${{ env.REGION }} \
+            --token ${{ steps.gcp-auth.outputs.access_token }}
