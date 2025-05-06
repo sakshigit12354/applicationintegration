@@ -107,7 +107,9 @@ jobs:
             echo "Applying integration file: $file"
       
             temp_dir=$(mktemp -d)
-            cp "$file" "$temp_dir/"
+            env_dir="$temp_dir/${{ env.ENVIRONMENT }}"
+            mkdir -p "$env_dir"
+            cp "$file" "$env_dir/"
       
             ./bin/integrationcli integrations apply \
               --env="${{ env.ENVIRONMENT }}" \
@@ -121,5 +123,4 @@ jobs:
       
             rm -rf "$temp_dir"
           done
-
 
