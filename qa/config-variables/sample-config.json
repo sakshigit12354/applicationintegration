@@ -1,5 +1,0 @@
-{
-	"`CONFIG_CONN_NAME`": "projects/galvanic-botany-454906-a4/locations/asia-south1/connections/pubsub",
-	"`CONFIG_TOPIC`": "projects/galvanic-botany-454906-a4/topics/mytopic",
-	"`CONFIG_URL`": "https://httpbin.org/get"
-}
