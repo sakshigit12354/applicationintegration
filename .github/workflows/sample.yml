@@ -71,14 +71,28 @@ jobs:
       - name: Check integrationcli version
         run: integrationcli --version
 
-      - name: Create and Publish Integration
+      # - name: Create and Publish Integration
+      #   run: |
+      #     integrationcli integrations apply \
+      #       --env="${{ env.ENVIRONMENT }}" \
+      #       --folder="./integrations/test" \
+      #       --userlabel="${{ steps.calc-vars.outputs.SHORT_SHA }}" \
+      #       --run-tests=true \
+      #       --wait=true \
+      #       --proj="${{ env.PROJECT_ID }}" \
+      #       --reg="${{ env.REGION }}" \
+      #       --token="${{ steps.gcp-auth.outputs.access_token }}"
+      - name: Loop through and Deploy All Integrations
         run: |
-          integrationcli integrations apply \
-            --env="${{ env.ENVIRONMENT }}" \
-            --folder="./integrations/test" \
-            --userlabel="${{ steps.calc-vars.outputs.SHORT_SHA }}" \
-            --run-tests=true \
-            --wait=true \
-            --proj="${{ env.PROJECT_ID }}" \
-            --reg="${{ env.REGION }}" \
-            --token="${{ steps.gcp-auth.outputs.access_token }}"
+          for dir in ./integrations/*/; do
+            echo "Applying integration in $dir"
+            integrationcli integrations apply \
+              --env="${{ env.ENVIRONMENT }}" \
+              --folder="$dir" \
+              --userlabel="${{ steps.calc-vars.outputs.SHORT_SHA }}" \
+              --run-tests=true \
+              --wait=true \
+              --proj="${{ env.PROJECT_ID }}" \
+              --reg="${{ env.REGION }}" \
+              --token="${{ steps.gcp-auth.outputs.access_token }}"
+          done
