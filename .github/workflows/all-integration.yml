@@ -80,20 +80,19 @@ jobs:
         run: |
           IFS=',' read -ra TOP_LEVEL <<< "${{ github.event.inputs.integrations_to_run }}"
           for top in "${TOP_LEVEL[@]}"; do
-            for dir in ./integrations/$top/*/; do
-              if [ -d "$dir" ]; then
-                echo "Applying integration in $dir"
-                integrationcli integrations apply \
-                  --env="${{ env.ENVIRONMENT }}" \
-                  --folder="$dir" \
-                  --userlabel="${{ steps.calc-vars.outputs.SHORT_SHA }}" \
-                  --run-tests=true \
-                  --wait=true \
-                  --proj="${{ env.PROJECT_ID }}" \
-                  --reg="${{ env.REGION }}" \
-                  --token="${{ steps.gcp-auth.outputs.access_token }}"
-              else
-                echo "⚠️ Skipping $dir - not a directory"
-              fi
-            done
+            dir="./integrations/$top"
+            if [ -d "$dir" ]; then
+              echo "Applying integration in $dir"
+              integrationcli integrations apply \
+                --env="${{ env.ENVIRONMENT }}" \
+                --folder="$dir" \
+                --userlabel="${{ steps.calc-vars.outputs.SHORT_SHA }}" \
+                --run-tests=true \
+                --wait=true \
+                --proj="${{ env.PROJECT_ID }}" \
+                --reg="${{ env.REGION }}" \
+                --token="${{ steps.gcp-auth.outputs.access_token }}"
+            else
+              echo "⚠️ Skipping $dir - not a directory"
+            fi
           done
