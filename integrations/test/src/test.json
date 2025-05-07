@@ -2,7 +2,7 @@
         "snapshotNumber": "1",
         "triggerConfigs": [
                 {
-                        "label": "API Trigger",
+                        "label": "API Trigger Addition",
                         "triggerType": "API",
                         "triggerNumber": "1",
                         "triggerId": "api_trigger/test_API_1",
